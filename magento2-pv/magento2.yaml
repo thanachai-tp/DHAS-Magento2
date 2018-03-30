@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: magento2
+  labels:
+    app: magento2
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: magento2
+    tier: frontend
+  type: LoadBalancer
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: nfs-magento2
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+
+
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: magento2
+  labels:
+    app: magento2
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: magento2
+        tier: frontend
+    spec:
+      containers:
+#      - image: richarvey/nginx-php-fpm 
+      - image: narate/php-fpm:magento2
+        name: magento2
+#        env:
+#        - name: FUN_DB_HOST
+#          value: galera
+#        - name: FUN_DB_PASSWORD
+#          valueFrom:
+#            secretKeyRef:
+#              name: mysql
+#              key: password
+        ports:
+        - containerPort: 80
+          name: magento2
+        volumeMounts:
+        - name: magento2-vol
+          mountPath: /var/www/html
+      volumes:
+      - name: magento2-vol
+        persistentVolumeClaim:
+          claimName: nfs-magento2
+#        hostPath:
+#          path: /test/magen

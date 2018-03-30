@@ -1,0 +1,97 @@
+#apiVersion: v1
+#kind: ConfigMap
+#metadata:
+#  name: nginx-conf
+#data:
+#  nginx.conf: |-
+#    user  nginx;
+#    worker_processes  auto;
+#
+#    error_log  error.log warn;
+#    pid        nginx.pid;
+#
+#    events {
+#        worker_connections  1024;
+#    }
+#
+#    http {
+#        include       mime.types;
+#        default_type  text/html;
+#
+#        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+#                          '$status $body_bytes_sent "$http_referer" '
+#                          '"$http_user_agent" "$http_x_forwarded_for"';
+#
+#        access_log  access.log  main;
+#
+#        sendfile        on;
+#        keepalive_timeout  65;
+#        root /usr/share/nginx/html;
+#        server {
+#            listen 80;
+#            location / {
+#            }
+#
+#            location ~ \.php$ {
+#          		  root /var/www/html;
+#                fastcgi_pass 127.0.0.1:9000;
+#                fastcgi_index index.php;
+#                include fastcgi_params;
+#                fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+#          	}
+#        }
+#    }
+#
+#---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: magento2
+  labels:
+    app: magento2
+spec:
+  volumes:
+  - name: source-code
+#    emptyDir: {}
+    hostPath: 
+      path: /test/ma2
+#  - name: nginx-conf
+#    configMap:
+#      name: nginx-conf
+
+#  - name: source-code
+#    emptyDir: {}
+#    hostPath: 
+#      path: /test/magento2
+
+  containers:
+  - name: magento2
+    ports:
+      - containerPort: 80
+    volumeMounts:
+    - name: source-code
+      mountPath: /var/www/html
+#      subPath: nginx.conf
+    image: narate/php-fpm:magento2
+
+#  - name: php
+#    volumeMounts:
+#      - name: source-code
+#        mountPath: /var/www/html
+#    image: php:7-fpm-alpine
+#    image: php:7-fpm-stretch
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: magento2
+spec:
+  selector:
+    app: magento2
+#  type: NodePort
+  type: LoadBalancer
+  ports:
+    - port: 80
+#      nodePort: 31080
+
